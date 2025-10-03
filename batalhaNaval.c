@@ -2,32 +2,60 @@
 
 #define TAB_SIZE 10
 #define SHIP_SIZE 3
+#define NAVIO 3
+#define AGUA 0
 
-#define HABILIDADE 5  // Valor para marcar área de efeito das habilidades
-#define NAVIO 3       // Valor para navio
-#define AGUA 0        // Valor para água
+// Função para verificar se uma posição está livre no tabuleiro
+int posicaoLivre(int tabuleiro[TAB_SIZE][TAB_SIZE], int linha, int coluna) {
+    return (linha >= 0 && linha < TAB_SIZE && coluna >= 0 && coluna < TAB_SIZE && tabuleiro[linha][coluna] == AGUA);
+}
 
-// Função para sobrepor matriz de habilidade ao tabuleiro
-void aplicarHabilidade(int tabuleiro[TAB_SIZE][TAB_SIZE], int habilidade[5][5], int origemLinha, int origemColuna) {
-    int tamanho = 5; // tamanho da matriz de habilidade
-    int i, j;
-
-    for(i = 0; i < tamanho; i++) {
-        for(j = 0; j < tamanho; j++) {
-            if(habilidade[i][j] == 1) {
-                int linhaTab = origemLinha - tamanho/2 + i;
-                int colTab = origemColuna - tamanho/2 + j;
-
-                // Verificar se está dentro dos limites do tabuleiro
-                if(linhaTab >= 0 && linhaTab < TAB_SIZE && colTab >= 0 && colTab < TAB_SIZE) {
-                    // Não sobrescreve navios
-                    if(tabuleiro[linhaTab][colTab] == AGUA) {
-                        tabuleiro[linhaTab][colTab] = HABILIDADE;
-                    }
-                }
-            }
-        }
+// Função para posicionar navio horizontal
+int posicionarHorizontal(int tabuleiro[TAB_SIZE][TAB_SIZE], int linha, int coluna) {
+    int i;
+    for(i = 0; i < SHIP_SIZE; i++) {
+        if(!posicaoLivre(tabuleiro, linha, coluna + i)) return 0; // Não cabe ou sobreposição
     }
+    for(i = 0; i < SHIP_SIZE; i++) {
+        tabuleiro[linha][coluna + i] = NAVIO;
+    }
+    return 1;
+}
+
+// Função para posicionar navio vertical
+int posicionarVertical(int tabuleiro[TAB_SIZE][TAB_SIZE], int linha, int coluna) {
+    int i;
+    for(i = 0; i < SHIP_SIZE; i++) {
+        if(!posicaoLivre(tabuleiro, linha + i, coluna)) return 0; // Não cabe ou sobreposição
+    }
+    for(i = 0; i < SHIP_SIZE; i++) {
+        tabuleiro[linha + i][coluna] = NAVIO;
+    }
+    return 1;
+}
+
+// Função para posicionar navio diagonal (para baixo e à direita)
+int posicionarDiagonalDesc(int tabuleiro[TAB_SIZE][TAB_SIZE], int linha, int coluna) {
+    int i;
+    for(i = 0; i < SHIP_SIZE; i++) {
+        if(!posicaoLivre(tabuleiro, linha + i, coluna + i)) return 0; // Não cabe ou sobreposição
+    }
+    for(i = 0; i < SHIP_SIZE; i++) {
+        tabuleiro[linha + i][coluna + i] = NAVIO;
+    }
+    return 1;
+}
+
+// Função para posicionar navio diagonal (para baixo e à esquerda)
+int posicionarDiagonalAsc(int tabuleiro[TAB_SIZE][TAB_SIZE], int linha, int coluna) {
+    int i;
+    for(i = 0; i < SHIP_SIZE; i++) {
+        if(!posicaoLivre(tabuleiro, linha + i, coluna - i)) return 0; // Não cabe ou sobreposição
+    }
+    for(i = 0; i < SHIP_SIZE; i++) {
+        tabuleiro[linha + i][coluna - i] = NAVIO;
+    }
+    return 1;
 }
 
 int main() {
@@ -41,51 +69,13 @@ int main() {
         }
     }
 
-    // Definir navios
-    int navioH_row = 1, navioH_col = 2; // Horizontal
-    int navioV_row = 4, navioV_col = 6; // Vertical
+    // Posicionar navios horizontal e vertical
+    posicionarHorizontal(tabuleiro, 1, 1); // Horizontal na linha 2, coluna B
+    posicionarVertical(tabuleiro, 4, 5);   // Vertical na linha 5, coluna F
 
-    for(i = 0; i < SHIP_SIZE; i++) {
-        tabuleiro[navioH_row][navioH_col + i] = NAVIO;
-        tabuleiro[navioV_row + i][navioV_col] = NAVIO;
-    }
-
-    // Criar matrizes de habilidade (5x5)
-    int cone[5][5] = {0};
-    int cruz[5][5] = {0};
-    int octaedro[5][5] = {0};
-
-    // Construção dinâmica do cone
-    for(i = 0; i < 5; i++) {
-        for(j = 0; j < 5; j++) {
-            if(j >= 2 - i && j <= 2 + i) {
-                cone[i][j] = 1;
-            }
-        }
-    }
-
-    // Construção dinâmica da cruz
-    for(i = 0; i < 5; i++) {
-        for(j = 0; j < 5; j++) {
-            if(i == 2 || j == 2) {
-                cruz[i][j] = 1;
-            }
-        }
-    }
-
-    // Construção dinâmica do octaedro (losango)
-    for(i = 0; i < 5; i++) {
-        for(j = 0; j < 5; j++) {
-            if(j >= 2 - abs(2 - i) && j <= 2 + abs(2 - i)) {
-                octaedro[i][j] = 1;
-            }
-        }
-    }
-
-    // Aplicar habilidades no tabuleiro
-    aplicarHabilidade(tabuleiro, cone, 2, 2);      // Cone no topo esquerdo
-    aplicarHabilidade(tabuleiro, cruz, 6, 3);      // Cruz no meio
-    aplicarHabilidade(tabuleiro, octaedro, 7, 7);  // Octaedro canto inferior direito
+    // Posicionar navios diagonais
+    posicionarDiagonalDesc(tabuleiro, 0, 6); // Diagonal descendo para baixo/direita
+    posicionarDiagonalAsc(tabuleiro, 3, 9);  // Diagonal descendo para baixo/esquerda
 
     // Exibir tabuleiro com cabeçalhos
     printf("   ");
@@ -97,9 +87,7 @@ int main() {
     for(i = 0; i < TAB_SIZE; i++) {
         printf("%2d ", i + 1);
         for(j = 0; j < TAB_SIZE; j++) {
-            if(tabuleiro[i][j] == AGUA) printf("A ");       // Água
-            else if(tabuleiro[i][j] == NAVIO) printf("N "); // Navio
-            else if(tabuleiro[i][j] == HABILIDADE) printf("H "); // Área de habilidade
+            printf("%d ", tabuleiro[i][j]);
         }
         printf("\n");
     }
